@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Astro Tycoon: Domínio Global</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0b10;
+            --glass-bg: rgba(20, 25, 40, 0.65);
+            --glass-border: rgba(100, 150, 255, 0.15);
+            --neon-cyan: #00f3ff;
+            --neon-magenta: #ff00ea;
+            --gold: #ffd700;
+            --text-main: #e0e6ed;
+            --text-muted: #8a9bb4;
+            --success: #00ff66;
+            --danger: #ff3366;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden; /* App like */
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: -webkit-fill-available;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 243, 255, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(255, 0, 234, 0.05), transparent 25%);
+        }
+
+        /* Top Header */
+        header {
+            background: rgba(10, 11, 16, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .wealth-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wealth-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .wealth-amount {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--success);
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+        }
+
+        .prestige-btn {
+            background: linear-gradient(45deg, #4400ff, var(--neon-magenta));
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(255, 0, 234, 0.4);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        
+        .prestige-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Main Scrollable Area */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        /* Views */
+        .view {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Business Card */
+        .business-card, .politics-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .business-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .business-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .business-level {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Progress Bar Area */
+        .progress-container {
+            width: 100%;
+            height: 45px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #0088ff, var(--neon-cyan));
+            box-shadow: 0 0 15px var(--neon-cyan);
+            transition: width 0.1s linear;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: white;
+            text-shadow: 1px 1px 3px black;
+            pointer-events: none;
+        }
+
+        /* Controls */
+        .business-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .btn-buy {
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+        .btn-buy:active { background: rgba(0, 243, 255, 0.3); }
+        .btn-buy.disabled {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.3);
+            pointer-events: none;
+        }
+
+        .btn-manager {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+        }
+        .btn-manager.bought {
+            background: rgba(255, 215, 0, 0.3);
+            pointer-events: none;
+            color: white;
+        }
+
+        .btn span { font-size: 0.7rem; opacity: 0.8; margin-top: 3px; font-family: 'Orbitron', sans-serif; }
+
+        /* Politics Styles */
+        .politics-card {
+            border-color: rgba(255, 215, 0, 0.3);
+            background: linear-gradient(180deg, rgba(20, 20, 25, 0.8), rgba(40, 35, 10, 0.6));
+        }
+        .pol-title { color: var(--gold); font-family: 'Orbitron', sans-serif; font-size: 1.1rem; margin-bottom: 5px; }
+        .pol-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; }
+        .pol-effect { color: var(--neon-magenta); font-weight: bold; margin-bottom: 12px; }
+        
+        /* Locked Overlay */
+        .locked-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        .locked-overlay span { margin-bottom: 10px; font-family: 'Orbitron', sans-serif; color: var(--danger); text-align: center; }
+
+        /* Mars Goal */
+        .mars-container {
+            text-align: center;
+            padding: 30px 15px;
+            background: rgba(255, 0, 234, 0.05);
+            border: 1px solid var(--neon-magenta);
+            border-radius: 16px;
+            margin-top: 20px;
+        }
+        .mars-title { font-family: 'Orbitron', sans-serif; color: var(--neon-magenta); font-size: 1.5rem; margin-bottom: 10px; }
+        .mars-desc { margin-bottom: 20px; color: var(--text-muted); }
+        .mars-btn {
+            background: var(--neon-magenta);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 0 20px var(--neon-magenta);
+        }
+
+        /* Stats */
+        .stats-panel {
+            background: rgba(0,0,0,0.4);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--glass-border);
+        }
+        .stat-line { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
+        .stat-val { font-family: 'Orbitron', sans-serif; color: var(--neon-cyan); }
+
+        /* Modal Prestige */
+        #prestigeModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: none;
+            justify-content: center; align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: linear-gradient(135deg, #1a1025, #0a0b10);
+            border: 1px solid var(--neon-magenta);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(255, 0, 234, 0.2);
+            max-width: 400px;
+        }
+        .modal-content h2 { font-family: 'Orbitron', sans-serif; color: white; margin-bottom: 15px; }
+        .modal-content p { color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem; }
+        .modal-highlight { color: var(--gold); font-size: 1.5rem; font-family: 'Orbitron', sans-serif; margin: 15px 0; display: block;}
+        .modal-btns { display: flex; gap: 15px; justify-content: center; }
+        .modal-btns button { padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-family: 'Orbitron', sans-serif;}
+        .btn-cancel { background: #333; color: white; }
+        .btn-confirm { background: var(--neon-magenta); color: white; box-shadow: 0 0 15px var(--neon-magenta); }
+
+        /* Bottom Nav */
+        nav {
+            background: rgba(10, 11, 16, 0.95);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid var(--glass-border);
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 20px 0;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .nav-item.active {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        .nav-icon {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="wealth-container">
+            <span class="wealth-label">Fortuna Atual</span>
+            <span class="wealth-amount" id="uiMoney">$0.00</span>
+        </div>
+        <button class="prestige-btn" onclick="showPrestigeModal()">Nova Ordem 👑</button>
+    </header>
+
+    <main>
+        <!-- View: Businesses -->
+        <div id="view-businesses" class="view active">
+            <div class="stats-panel">
+                <div class="stat-line"><span>Multiplicador Base:</span> <span class="stat-val">1x</span></div>
+                <div class="stat-line"><span>Corrupção Política:</span> <span class="stat-val" id="uiPolBonus">0%</span></div>
+                <div class="stat-line"><span>Poder de Monopólio:</span> <span class="stat-val" id="uiPrestigeBonus">0%</span></div>
+                <div class="stat-line" style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                    <span style="color:white; font-weight:bold;">Lucro Total/seg:</span> 
+                    <span class="stat-val" id="uiIncomePerSec" style="color:var(--success);">$0.00</span>
+                </div>
+            </div>
+            
+            <div id="businessesContainer">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- View: Politics -->
+        <div id="view-politics" class="view">
+            <div style="margin-bottom: 20px;">
+                <h2 style="font-family: 'Orbitron', sans-serif; color: var(--gold); margin-bottom: 5px;">Geopolítica</h2>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">As leis do mercado não se aplicam a quem escreve as leis. Compre influência política para multiplicar permanentemente os lucros de todo o seu império.</p>
+            </div>
+            <div id="politicsContainer">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- View: Space -->
+        <div id="view-space" class="view">
+            <div class="mars-container">
+                <h2 class="mars-title">Projeto MARTE-1</h2>
+                <p class="mars-desc">A Terra ficou pequena demais para o seu Monopólio. O objetivo final é financiar a primeira colônia corporativa em Marte e declarar independência global.</p>
+                <div class="stat-line" style="justify-content: center; margin-bottom: 20px;">
+                    <span style="color: var(--text-muted);">Custo do Lançamento:</span> 
+                    <span class="stat-val" style="margin-left: 10px; color: var(--danger); font-size: 1.2rem;">$1.00 Qi (Quintilhão)</span>
+                </div>
+                <button class="mars-btn" id="btnLaunch" onclick="launchMars()">LANÇAR FOGUETE</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Nav -->
+    <nav>
+        <div class="nav-item active" onclick="switchTab('businesses', this)">
+            <span class="nav-icon">🏢</span>
+            <span>Empresas</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('politics', this)">
+            <span class="nav-icon">🏛️</span>
+            <span>Política</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('space', this)">
+            <span class="nav-icon">🚀</span>
+            <span>Espaço</span>
+        </div>
+    </nav>
+
+    <!-- Prestige Modal -->
+    <div id="prestigeModal">
+        <div class="modal-content">
+            <h2>Nova Ordem Mundial</h2>
+            <p>Venda todas as suas empresas e influências, descarte sua fortuna e reinicie nos bastidores.</p>
+            <p style="color: var(--danger); font-size: 0.8rem;">Requer mínimo de: <b>$1.00 Trilhão</b></p>
+            <p>Você ganhará Pontos de Monopólio (PM). Cada ponto concede <b>+10% de lucro global permanente</b> nesta e nas próximas vidas.</p>
+            
+            <span class="modal-highlight" id="prestigeGainText">Ganho: 0 PM</span>
+            
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closePrestigeModal()">Cancelar</button>
+                <button class="btn-confirm" id="btnConfirmPrestige" onclick="doPrestige()">Vender Império</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Number Formatting (Math for Quintillions) ---
+        function formatMoney(num) {
+            if (num < 1000) return "$" + Math.floor(num).toString();
+            const exponent = Math.floor(Math.log10(num));
+            const suffixIndex = Math.floor(exponent / 3);
+            const suffixes = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx"];
+            
+            if (suffixIndex < suffixes.length) {
+                let shortValue = num / Math.pow(10, suffixIndex * 3);
+                return "$" + shortValue.toFixed(2) + " " + suffixes[suffixIndex];
+            }
+            return "$" + num.toExponential(2);
+        }
+
+        // --- Game State ---
+        let money = 0;
+        let prestigePoints = 0;
+        let lastTime = performance.now();
+        
+        // Tab switching
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + tabId).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // --- Data ---
+        // Scale to 1 Quintillion = 1,000,000,000,000,000,000 (1e18)
+        const businesses = [
+            { id: 0, name: "Banca de Limonada", baseCost: 10, baseRevenue: 1, baseTime: 1, count: 1, manager: false, progress: 0, active: false, reqMoney: 0 },
+            { id: 1, name: "Startup de Garagem", baseCost: 500, baseRevenue: 50, baseTime: 3, count: 0, manager: false, progress: 0, active: false, reqMoney: 400 },
+            { id: 2, name: "Fazenda de Cripto", baseCost: 25000, baseRevenue: 2500, baseTime: 6, count: 0, manager: false, progress: 0, active: false, reqMoney: 15000 },
+            { id: 3, name: "Indústria de Drones", baseCost: 1500000, baseRevenue: 150000, baseTime: 12, count: 0, manager: false, progress: 0, active: false, reqMoney: 1000000 },
+            { id: 4, name: "Inteligência Artificial", baseCost: 100000000, baseRevenue: 9000000, baseTime: 24, count: 0, manager: false, progress: 0, active: false, reqMoney: 75000000 },
+            { id: 5, name: "Minério Profundo", baseCost: 25000000000, baseRevenue: 2000000000, baseTime: 48, count: 0, manager: false, progress: 0, active: false, reqMoney: 15000000000 },
+            { id: 6, name: "Aeroespacial Global", baseCost: 5000000000000, baseRevenue: 300000000000, baseTime: 96, count: 0, manager: false, progress: 0, active: false, reqMoney: 3000000000000 },
+            { id: 7, name: "Controle Energético", baseCost: 1000000000000000, baseRevenue: 50000000000000, baseTime: 192, count: 0, manager: false, progress: 0, active: false, reqMoney: 500000000000000 }
+        ];
+
+        const politics = [
+            { id: 0, name: "Campanha de Prefeito", desc: "Isenção fiscal na sua cidade.", cost: 1000000, multi: 0.5, bought: false }, // +50%
+            { id: 1, name: "Comprar Mídia Local", desc: "Redes de TV a seu favor.", cost: 50000000, multi: 2, bought: false }, // +200%
+            { id: 2, name: "Lobby no Senado", desc: "Aprovação de leis sob demanda.", cost: 5000000000, multi: 5, bought: false }, // +500%
+            { id: 3, name: "Presidente Fantoche", desc: "Controle sobre as Forças Armadas.", cost: 500000000000, multi: 15, bought: false }, // +1500%
+            { id: 4, name: "Paraísos Fiscais Globais", desc: "0% de taxas continentais.", cost: 50000000000000, multi: 50, bought: false }, // +5000%
+            { id: 5, name: "Privatizar a União Europeia", desc: "Um continente inteiro responde a você.", cost: 10000000000000000, multi: 200, bought: false }, // +20000%
+            { id: 6, name: "Nova Ordem Mundial", desc: "Você é a Lei Absoluta da Terra.", cost: 100000000000000000, multi: 1000, bought: false } // +100000%
+        ];
+
+        // Multipliers
+        function getPoliticsMulti() {
+            let m = 0;
+            politics.forEach(p => { if (p.bought) m += p.multi; });
+            return m;
+        }
+
+        function getPrestigeMulti() {
+            return prestigePoints * 0.10; // 10% per point
+        }
+
+        function getGlobalMulti() {
+            return 1 + getPoliticsMulti() + getPrestigeMulti();
+        }
+
+        // Costs & Rev
+        function getCost(bus) {
+            return bus.baseCost * Math.pow(1.15, bus.count);
+        }
+        function getManagerCost(bus) {
+            return bus.baseCost * 50;
+        }
+        function getRevenue(bus) {
+            return bus.baseRevenue * bus.count * getGlobalMulti();
+        }
+
+        // --- Render ---
+        function renderBusinesses() {
+            const container = document.getElementById('businessesContainer');
+            container.innerHTML = '';
+            
+            let allIncomePerSec = 0;
+
+            businesses.forEach(bus => {
+                const unlocked = money >= bus.reqMoney || bus.count > 0;
+                if (!unlocked && bus.id > 0 && businesses[bus.id-1].count == 0) return; // Hide far future
+
+                const cost = getCost(bus);
+                const managerCost = getManagerCost(bus);
+                const rev = getRevenue(bus);
+                const incomePerSec = (bus.count > 0 && bus.manager) ? (rev / bus.baseTime) : 0;
+                allIncomePerSec += incomePerSec;
+
+                const card = document.createElement('div');
+                card.className = 'business-card';
+
+                if (!unlocked) {
+                    card.innerHTML = `
+                        <div class="locked-overlay">
+                            <span>REQUER:<br>${formatMoney(bus.reqMoney)}</span>
+                        </div>
+                        <div class="business-header"><div class="business-title">Nível Confidencial</div></div>
+                        <div class="progress-container"></div>
+                    `;
+                    container.appendChild(card);
+                    return;
+                }
+
+                card.innerHTML = `
+                    <div class="business-header">
+                        <div class="business-title">${bus.name}</div>
+                        <div class="business-level">Lvl ${bus.count}</div>
+                    </div>
+                    <div class="progress-container" id="prog-${bus.id}" onclick="startBusiness(${bus.id})">
+                        <div class="progress-fill" id="fill-${bus.id}"></div>
+                        <div class="progress-text">${formatMoney(rev)} / ${bus.baseTime}s</div>
+                    </div>
+                    <div class="business-controls">
+                        <button class="btn btn-buy ${money < cost ? 'disabled' : ''}" onclick="buyBusiness(${bus.id})">
+                            Comprar
+                            <span>${formatMoney(cost)}</span>
+                        </button>
+                        <button class="btn btn-manager ${bus.manager ? 'bought' : ''} ${(!bus.manager && money < managerCost) ? 'disabled' : ''}" onclick="buyManager(${bus.id})">
+                            ${bus.manager ? 'Gerente Ativo' : 'Contratar Gerente'}
+                            <span>${bus.manager ? 'Automático' : formatMoney(managerCost)}</span>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('uiIncomePerSec').innerText = formatMoney(allIncomePerSec);
+        }
+
+        function renderPolitics() {
+            const container = document.getElementById('politicsContainer');
+            container.innerHTML = '';
+            
+            politics.forEach(pol => {
+                const card = document.createElement('div');
+                card.className = 'politics-card';
+                card.innerHTML = `
+                    <div class="pol-title">${pol.name}</div>
+                    <div class="pol-desc">${pol.desc}</div>
+                    <div class="pol-effect">Efeito de Poder: +${pol.multi * 100}% Lucro Global</div>
+                    <button class="btn btn-manager ${pol.bought ? 'bought' : ''} ${(!pol.bought && money < pol.cost) ? 'disabled' : ''}" onclick="buyPolitics(${pol.id})" style="width: 100%;">
+                        ${pol.bought ? 'Corrompido (Ativo)' : 'Comprar Influência'}
+                        <span>${pol.bought ? 'Permanente' : formatMoney(pol.cost)}</span>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateUIValues() {
+            document.getElementById('uiMoney').innerText = formatMoney(money);
+            document.getElementById('uiPolBonus').innerText = "+" + (getPoliticsMulti() * 100) + "%";
+            document.getElementById('uiPrestigeBonus').innerText = "+" + (getPrestigeMulti() * 100) + "%";
+        }
+
+        // --- Actions ---
+        window.buyBusiness = function(id) {
+            const bus = businesses[id];
+            const cost = getCost(bus);
+            if (money >= cost) {
+                money -= cost;
+                bus.count++;
+                updateUIValues();
+                renderBusinesses();
+            }
+        };
+
+        window.buyManager = function(id) {
+            const bus = businesses[id];
+            const cost = getManagerCost(bus);
+            if (money >= cost && !bus.manager && bus.count > 0) {
+                money -= cost;
+                bus.manager = true;
+                // auto start if not running
+                if (!bus.active) bus.active = true;
+                updateUIValues();
+                renderBusinesses();
+            }
+        };
+
+        window.startBusiness = function(id) {
+            const bus = businesses[id];
+            if (bus.count > 0 && !bus.active) {
+                bus.active = true;
+                bus.progress = 0;
+            }
+        };
+
+        window.buyPolitics = function(id) {
+            const pol = politics[id];
+            if (money >= pol.cost && !pol.bought) {
+                money -= pol.cost;
+                pol.bought = true;
+                updateUIValues();
+                renderPolitics();
+                renderBusinesses(); // updates incomes based on new multiplier
+            }
+        };
+
+        // --- Mars Goal ---
+        window.launchMars = function() {
+            if (money >= 1000000000000000000) { // 1 Quintillion
+                alert("🚀 LANÇAMENTO AUTORIZADO! 🚀\nVocê agora é o Imperador do Sistema Solar. Parabéns por chegar a 1 Quintilhão e zerar esta versão do jogo!");
+            } else {
+                alert("Fundos insuficientes para o projeto de colonização. Você precisa de 1 Quintilhão (1.00 Qi) de dólares.");
+            }
+        }
+
+        // --- Prestige System ---
+        window.showPrestigeModal = function() {
+            let points = 0;
+            if (money >= 1000000000000) { // 1 Trillion min
+                points = Math.floor(Math.cbrt(money / 1000000000000));
+            }
+            
+            document.getElementById('prestigeGainText').innerText = `Ganho: ${points} PM (Pontos Monopólio)`;
+            
+            const btn = document.getElementById('btnConfirmPrestige');
+            if (points > 0) {
+                btn.style.opacity = "1";
+                btn.disabled = false;
+            } else {
+                btn.style.opacity = "0.5";
+                btn.disabled = true;
+            }
+            
+            document.getElementById('prestigeModal').style.display = 'flex';
+        };
+        
+        window.closePrestigeModal = function() {
+            document.getElementById('prestigeModal').style.display = 'none';
+        };
+
+        window.doPrestige = function() {
+            if (money < 1000000000000) return; // Security check
+            
+            let points = Math.floor(Math.cbrt(money / 1000000000000));
+            prestigePoints += points;
+            
+            // Hard Reset
+            money = 0;
+            businesses.forEach((bus, i) => {
+                bus.count = (i === 0) ? 1 : 0;
+                bus.manager = false;
+                bus.progress = 0;
+                bus.active = false;
+            });
+            politics.forEach(pol => pol.bought = false);
+            
+            closePrestigeModal();
+            updateUIValues();
+            renderBusinesses();
+            renderPolitics();
+        };
+
+        // --- Main Game Loop ---
+        function gameLoop(timestamp) {
+            let delta = (timestamp - lastTime) / 1000; // seconds passed
+            lastTime = timestamp;
+
+            // Cap offline time calc to 24 hours max
+            if (delta > 86400) delta = 86400;
+
+            let uiNeedsUpdate = false;
+
+            businesses.forEach(bus => {
+                if (bus.active) {
+                    bus.progress += delta;
+                    
+                    if (bus.progress >= bus.baseTime) {
+                        let timesFinished = 1;
+                        if (bus.manager) {
+                            timesFinished = Math.floor(bus.progress / bus.baseTime);
+                            bus.progress = bus.progress % bus.baseTime;
+                        } else {
+                            bus.progress = 0;
+                            bus.active = false;
+                        }
+                        
+                        money += getRevenue(bus) * timesFinished;
+                        uiNeedsUpdate = true;
+                    }
+                    
+                    // Visual update for progress bar width
+                    const fillEl = document.getElementById('fill-' + bus.id);
+                    if (fillEl) {
+                        let pct = (bus.progress / bus.baseTime) * 100;
+                        if (!bus.active) pct = 0;
+                        fillEl.style.width = Math.min(pct, 100) + "%";
+                    }
+                }
+            });
+
+            if (uiNeedsUpdate) {
+                document.getElementById('uiMoney').innerText = formatMoney(money);
+                
+                // Real-time button enabling without full DOM rebuild
+                businesses.forEach(bus => {
+                    const btns = document.querySelectorAll(`#prog-${bus.id} ~ .business-controls .btn`);
+                    if(btns.length === 2){
+                        if(money >= getCost(bus)) btns[0].classList.remove('disabled');
+                        else btns[0].classList.add('disabled');
+                        
+                        if(!bus.manager && money >= getManagerCost(bus)) btns[1].classList.remove('disabled');
+                        else if (!bus.manager) btns[1].classList.add('disabled');
+                    }
+                });
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- Initialization ---
+        updateUIValues();
+        renderBusinesses();
+        renderPolitics();
+        requestAnimationFrame(gameLoop);
+
+    </script>
+</body>
+</html>
